@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta tags, links, etc. -->
+    <title>Raspberry Pi Data</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Style for Tabs */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+    <!-- Include Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container mx-auto p-4">
+        <!-- Tabs for Navigation -->
+        <div class="flex space-x-4">
+            <button id="dashboardTab" class="bg-blue-600 text-white px-4 py-2 rounded">Dashboard</button>
+            <button id="historyTab" class="bg-blue-600 text-white px-4 py-2 rounded">History</button>
+        </div>
+
+        <!-- Tab Contents -->
+        <div id="dashboard" class="tab-content active">
+            <!-- Dashboard content (your current implementation) -->
+        </div>
+
+        <div id="history" class="tab-content">
+            <canvas id="historyChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript for toggling tabs
+        document.getElementById('dashboardTab').addEventListener('click', function () {
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('history').classList.remove('active');
+        });
+
+        document.getElementById('historyTab').addEventListener('click', function () {
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('history').classList.add('active');
+            loadHistoryGraph();  // Call the function to load the graph
+        });
+
+        // Function to load historical graph data
+        async function loadHistoryGraph() {
+            const response = await fetch('/get_history_data');  // Fetch historical data from Flask
+            const data = await response.json();
+            
+            const ctx = document.getElementById('historyChart').getContext('2d');
+            const historyChart = new Chart(ctx, {
+                type: 'line', // You can also use 'bar', 'pie', etc.
+                data: {
+                    labels: data.dates, // X-axis labels
+                    datasets: [{
+                        label: 'Product Count',
+                        data: data.product_counts, // Y-axis values
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Not OK Count',
+                        data: data.not_ok_counts, // Another dataset for 'Not OK' counts
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'time',  // Use 'time' for time series data
+                            time: {
+                                unit: 'day', // Adjust unit based on your data
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
